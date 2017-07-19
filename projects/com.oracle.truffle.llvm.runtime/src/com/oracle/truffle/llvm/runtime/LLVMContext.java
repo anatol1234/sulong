@@ -51,6 +51,7 @@ import com.oracle.truffle.llvm.runtime.memory.LLVMMemory;
 import com.oracle.truffle.llvm.runtime.memory.LLVMNativeFunctions;
 import com.oracle.truffle.llvm.runtime.memory.LLVMThreadingStack;
 import com.oracle.truffle.llvm.runtime.options.SulongEngineOption;
+import com.oracle.truffle.llvm.runtime.types.DataSpecConverter;
 import com.oracle.truffle.llvm.runtime.types.FunctionType;
 import com.oracle.truffle.llvm.runtime.types.Type;
 
@@ -89,6 +90,8 @@ public final class LLVMContext {
 
     // #define SIG_ERR ((__sighandler_t) -1) /* Error return. */
     private final LLVMFunction sigErr;
+
+    private DataSpecConverter dataLayout;
 
     public static final class DestructorStackElement {
         private final LLVMFunctionDescriptor destructor;
@@ -231,6 +234,14 @@ public final class LLVMContext {
 
     public LLVMFunction getSigErr() {
         return sigErr;
+    }
+
+    public void setDataLayout(DataSpecConverter dataLayout) {
+        this.dataLayout = dataLayout;
+    }
+
+    public DataSpecConverter getDataLayout() {
+        return dataLayout;
     }
 
     @TruffleBoundary

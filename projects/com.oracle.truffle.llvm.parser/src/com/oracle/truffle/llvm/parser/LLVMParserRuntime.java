@@ -45,7 +45,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.llvm.parser.datalayout.DataLayoutConverter;
-import com.oracle.truffle.llvm.parser.datalayout.DataLayoutConverter.DataSpecConverterImpl;
 import com.oracle.truffle.llvm.parser.metadata.DebugInformation;
 import com.oracle.truffle.llvm.parser.model.ModelModule;
 import com.oracle.truffle.llvm.parser.model.enums.Linkage;
@@ -70,6 +69,7 @@ import com.oracle.truffle.llvm.runtime.nodes.api.LLVMExpressionNode;
 import com.oracle.truffle.llvm.runtime.options.SulongEngineOption;
 import com.oracle.truffle.llvm.runtime.types.AggregateType;
 import com.oracle.truffle.llvm.runtime.types.ArrayType;
+import com.oracle.truffle.llvm.runtime.types.DataSpecConverter;
 import com.oracle.truffle.llvm.runtime.types.FunctionType;
 import com.oracle.truffle.llvm.runtime.types.PointerType;
 import com.oracle.truffle.llvm.runtime.types.PrimitiveType;
@@ -97,7 +97,8 @@ public final class LLVMParserRuntime {
         LLVMModelVisitor module = new LLVMModelVisitor();
         model.accept(module);
 
-        DataLayoutConverter.DataSpecConverterImpl targetDataLayout = DataLayoutConverter.getConverter(layout.getDataLayout());
+        DataLayoutConverter targetDataLayout = DataLayoutConverter.getConverter(layout.getDataLayout());
+        context.setDataLayout(targetDataLayout);
         LLVMParserRuntime runtime = new LLVMParserRuntime(source, language, context, stack, targetDataLayout, nodeFactory, module.getAliases());
 
         runtime.initializeFunctions(phiManager, labels, module.getFunctions());
@@ -131,14 +132,14 @@ public final class LLVMParserRuntime {
     private final LLVMLanguage language;
     private final LLVMContext context;
     private final StackAllocation stack;
-    private final DataLayoutConverter.DataSpecConverterImpl targetDataLayout;
+    private final DataSpecConverter targetDataLayout;
     private final NodeFactory nodeFactory;
     private final Map<GlobalAlias, Symbol> aliases;
     private final List<LLVMExpressionNode> deallocations;
     private final LLVMScope scope;
     private final DebugInformation debugInformation;
 
-    private LLVMParserRuntime(Source source, LLVMLanguage language, LLVMContext context, StackAllocation stack, DataSpecConverterImpl targetDataLayout, NodeFactory nodeFactory,
+    public LLVMParserRuntime(Source source, LLVMLanguage language, LLVMContext context, StackAllocation stack, DataSpecConverter targetDataLayout, NodeFactory nodeFactory,
                     Map<GlobalAlias, Symbol> aliases) {
         this.source = source;
         this.context = context;
