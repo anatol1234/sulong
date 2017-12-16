@@ -6,7 +6,7 @@ GraalVM by [Oracle Labs](https://labs.oracle.com).
 Sulong is written in Java and uses the Truffle language implementation
 framework and Graal as a dynamic compiler.
 
-With Sulong you can execute C/C++, Fortran, and other programming languages
+With Sulong you can execute C/C++, Fortran, Rust and other programming languages
 that can be transformed to LLVM bitcode on Graal VM. To execute a program,
 you have to compile the program to LLVM bitcode by a LLVM front end such
 as `clang`.
@@ -63,7 +63,7 @@ through the Graal Polyglot SDK.
 
 #### Compiling to LLVM bitcode format
 
-Graal VM can execute C/C++, Fortran, and other programs that can be compiled to
+Graal VM can execute C/C++, Fortran, Rust and other programs that can be compiled to
 LLVM bitcode. As a first step, you have to compile the program to LLVM bitcode
 using an LLVM frontend such as `clang`. C/C++ code can be compiled to LLVM
 bitcode using `clang` with the `-emit-llvm` option.
@@ -93,8 +93,12 @@ Build Dependencies
 Sulong is mostly implemented in Java. However, parts of Sulong are
 implemented in C/C++ and will be compiled to a shared library or a bitcode
 file. For a successful build you need to have LLVM (incl. `CLANG` and `OPT`
-tool) 3.8 - v5.0 installed. Sulong also depends on `libc++` and `libc++abi`
-(on Ubuntu, install `libc++1`, `libc++abi1`, `libc++-dev`, `libc++abi-dev`).
+tool) 3.8 - v5.0 installed. Sulong also depends on `libc++`, `libc++abi`
+(on Ubuntu, install `libc++1`, `libc++abi1`, `libc++-dev`, `libc++abi-dev`) and an optional Rust installation (refer to [Install Rust](https://www.rust-lang.org/en-US/install.html)). On Unix the recommended command line looks as follows:
+
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain none
+
+This will download the Rust toolchain installer `rustup`, which in turn will automatically install the correct Rust toolchain upon building Sulong.
 For a full list of external dependencies on Ubuntu you can look at our
 Travis configuration.
 
@@ -161,6 +165,11 @@ path for the specifed libraries with a relative path. Both options can be given
 multiple arguments separated by `:`.
 
     mx lli -Dpolyglot.llvm.libraryPath=lib -Dpolyglot.llvm.libraries=liba.so test.bc
+
+Executing Rust bitcode files may require linking the Rust standard library. Use the alias `lstdrust` to conveniently load the standard library of the currently active Rust toolchain (default: specified in the `rust-toolchain` file). Note that this may automatically install a missing Rust toolchain if the Rust version specified in the `rust-toolchain` file is unavailable:
+
+    rustc --emit=llvm-bc test.rs
+    mx lli -Dpolyglot.llvm.libraries=lstdrust test.bc  
 
 If you want to use the project from within Eclipse, use the following
 command to generate the Eclipse project files (there is also mx ideinit
