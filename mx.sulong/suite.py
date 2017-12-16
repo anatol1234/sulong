@@ -305,6 +305,14 @@ suite = {
         "OS" : "<os>",
       },
     },
+    "com.oracle.truffle.llvm.tests.sulongrust" : {
+      "subDir" : "tests",
+      "class" : "SulongTestSuite",
+      "variants" : ["O0"],
+      "buildEnv" : {
+        "OS" : "<os>",
+      },
+    },
     "com.oracle.truffle.llvm.tests.libc" : {
       "subDir" : "tests",
       "class" : "SulongTestSuite",
@@ -388,6 +396,7 @@ suite = {
         "com.oracle.truffle.llvm.tests.nfi",
         "com.oracle.truffle.llvm.tests.sulong",
         "com.oracle.truffle.llvm.tests.sulongcpp",
+        "com.oracle.truffle.llvm.tests.sulongrust",
         "com.oracle.truffle.llvm.tests.libc",
       ],
       "license" : "BSD-new",

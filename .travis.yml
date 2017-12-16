@@ -7,6 +7,9 @@ dist: trusty
 sudo: required
 group: deprecated-2017Q3
 language: java
+language: rust
+rust:
+  - 1.19.0
 python:
   - "2.7"
 addons:
