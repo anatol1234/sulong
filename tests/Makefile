@@ -100,4 +100,4 @@ $(eval $(call OPT_RULES,O3,-O3))
 
 %/libs:
 	@mkdir -p $(shell dirname $@)
-	$(QUIETLY) $(file > $@, $(LIB_ENTRIES))
+	@echo "$(LIB_ENTRIES)" > $@
