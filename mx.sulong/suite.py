@@ -309,6 +309,9 @@ suite = {
       "subDir" : "tests",
       "class" : "SulongTestSuite",
       "variants" : ["O0"],
+      "libraries" : [
+        {"lib" : "<rustlib:std>", "dependencies" : ["RUST"]}
+      ],
       "buildEnv" : {
         "OS" : "<os>",
       },
