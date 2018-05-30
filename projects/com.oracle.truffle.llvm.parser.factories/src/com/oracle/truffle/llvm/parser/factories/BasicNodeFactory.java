@@ -149,8 +149,10 @@ import com.oracle.truffle.llvm.nodes.literals.LLVMVectorLiteralNodeFactory.LLVMV
 import com.oracle.truffle.llvm.nodes.literals.LLVMVectorLiteralNodeFactory.LLVMVectorI32LiteralNodeGen;
 import com.oracle.truffle.llvm.nodes.literals.LLVMVectorLiteralNodeFactory.LLVMVectorI64LiteralNodeGen;
 import com.oracle.truffle.llvm.nodes.literals.LLVMVectorLiteralNodeFactory.LLVMVectorI8LiteralNodeGen;
+import com.oracle.truffle.llvm.nodes.memory.LLVMAllocInstruction.LLVMAllocConstInstruction;
 import com.oracle.truffle.llvm.nodes.memory.LLVMAllocInstruction.LLVMAllocaConstInstruction;
 import com.oracle.truffle.llvm.nodes.memory.LLVMAllocInstructionFactory.LLVMAllocaConstInstructionNodeGen;
+import com.oracle.truffle.llvm.nodes.memory.LLVMAllocInstructionFactory.LLVMUniqueAllocConstInstructionNodeGen;
 import com.oracle.truffle.llvm.nodes.memory.LLVMAllocInstructionFactory.LLVMAllocaInstructionNodeGen;
 import com.oracle.truffle.llvm.nodes.memory.LLVMCompareExchangeNodeGen;
 import com.oracle.truffle.llvm.nodes.memory.LLVMFenceNodeGen;
@@ -1255,7 +1257,7 @@ public class BasicNodeFactory implements NodeFactory {
     @Override
     public LLVMExpressionNode createArrayLiteral(LLVMContext context, List<LLVMExpressionNode> arrayValues, ArrayType arrayType) {
         assert arrayType.getNumberOfElements() == arrayValues.size();
-        LLVMExpressionNode arrayAlloc = createAlloca(context, arrayType);
+        LLVMExpressionNode arrayAlloc = createUniqueAlloc(context, arrayType);
         int nrElements = arrayValues.size();
         Type elementType = arrayType.getElementType();
         int elementSize = context.getByteSize(elementType);
@@ -1292,19 +1294,21 @@ public class BasicNodeFactory implements NodeFactory {
     }
 
     @Override
-    public LLVMExpressionNode createAlloca(LLVMContext context, Type type) {
-        int alignment = context.getByteAlignment(type);
+    public LLVMExpressionNode createAlloca(LLVMContext context, Type type, int alignment) {
         int byteSize = context.getByteSize(type);
-        return createAlloca(context, type, byteSize, alignment);
+        LLVMAllocConstInstruction alloc = LLVMAllocaConstInstructionNodeGen.create(byteSize, alignment, type);
+        return createAlloc(context, type, alloc, byteSize);
     }
 
     @Override
-    public LLVMExpressionNode createAlloca(LLVMContext context, Type type, int alignment) {
+    public LLVMExpressionNode createUniqueAlloc(LLVMContext context, Type type) {
+        int alignment = context.getByteAlignment(type);
         int byteSize = context.getByteSize(type);
-        return createAlloca(context, type, byteSize, alignment);
+        LLVMAllocConstInstruction alloc = LLVMUniqueAllocConstInstructionNodeGen.create(byteSize, alignment, type);
+        return createAlloc(context, type, alloc, byteSize);
     }
 
-    protected static LLVMExpressionNode createAlloca(LLVMContext context, Type type, int byteSize, int alignment) {
+    protected static LLVMExpressionNode createAlloc(LLVMContext context, Type type, LLVMAllocConstInstruction alloc, int byteSize) {
         if (type instanceof StructureType) {
             StructureType struct = (StructureType) type;
             final int[] offsets = new int[struct.getNumberOfElements()];
@@ -1322,12 +1326,10 @@ public class BasicNodeFactory implements NodeFactory {
                 currentOffset += context.getByteSize(elemType);
             }
             assert currentOffset <= byteSize : "currentOffset " + currentOffset + " vs. byteSize " + byteSize;
-            LLVMAllocaConstInstruction alloc = LLVMAllocaConstInstructionNodeGen.create(byteSize, alignment, type);
             alloc.setTypes(types);
             alloc.setOffsets(offsets);
-            return alloc;
         }
-        return LLVMAllocaConstInstructionNodeGen.create(byteSize, alignment, type);
+        return alloc;
     }
 
     @Override
@@ -1385,7 +1387,7 @@ public class BasicNodeFactory implements NodeFactory {
         int[] offsets = new int[types.length];
         LLVMStoreNode[] nodes = new LLVMStoreNode[types.length];
         int currentOffset = 0;
-        LLVMExpressionNode alloc = createAlloca(context, structType);
+        LLVMExpressionNode alloc = createUniqueAlloc(context, structType);
         for (int i = 0; i < types.length; i++) {
             Type resolvedType = types[i];
             if (!packed) {
@@ -1821,7 +1823,7 @@ public class BasicNodeFactory implements NodeFactory {
 
     @Override
     public LLVMExpressionNode createCopyStructByValue(LLVMContext context, Type type, LLVMExpressionNode parameterNode) {
-        LLVMExpressionNode allocationNode = createAlloca(context, type);
+        LLVMExpressionNode allocationNode = createUniqueAlloc(context, type);
         return LLVMStructByValueNodeGen.create(createMemMove(), allocationNode, parameterNode, context.getByteSize(type));
     }
 
