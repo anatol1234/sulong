@@ -52,6 +52,8 @@ import com.oracle.truffle.llvm.runtime.nodes.api.LLVMToNativeNode;
 import com.oracle.truffle.llvm.runtime.pointer.LLVMNativePointer;
 import com.oracle.truffle.llvm.runtime.pointer.LLVMPointer;
 import com.oracle.truffle.llvm.runtime.types.FunctionType;
+import com.oracle.truffle.llvm.runtime.types.PointerType;
+import com.oracle.truffle.llvm.runtime.types.PrimitiveType;
 import com.oracle.truffle.llvm.runtime.types.StructureType;
 import com.oracle.truffle.llvm.runtime.types.Type;
 
@@ -88,19 +90,19 @@ public abstract class LLVMStart extends LLVMIntrinsic {
     public abstract static class LLVMLangStartInternal extends LLVMStart {
 
         @TruffleBoundary
-        protected LangStartVtableType createLangStartVtable(Type vtableType) {
+        protected LangStartVtableType createLangStartVtable() {
             DataLayout dataSpecConverter = getContextReference().get().getDataSpecConverter();
-            return LangStartVtableType.create(dataSpecConverter, vtableType);
+            return LangStartVtableType.create(dataSpecConverter);
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        protected long doOp(StackPointer stackPointer, LLVMNativePointer mainPointer, LLVMGlobal vtable, long argc, LLVMPointer argv,
+        protected long doOp(StackPointer stackPointer, LLVMNativePointer mainPointer, LLVMPointer vtable, long argc, LLVMPointer argv,
                         @Cached("createToNativeWithTarget()") LLVMToNativeNode toNative,
                         @Cached("getClosureDispatchNode()") LLVMClosureDispatchNode fnDispatchNode,
                         @Cached("getClosureDispatchNode()") LLVMClosureDispatchNode dropInPlaceDispatchNode) {
             LLVMMemory memory = getLLVMMemory();
-            LangStartVtableType langStartVtable = createLangStartVtable(vtable.getPointeeType());
+            LangStartVtableType langStartVtable = createLangStartVtable();
             LLVMNativePointer vtablePointer = toNative.executeWithTarget(vtable);
             LLVMNativePointer fn = readFn(memory, vtablePointer, langStartVtable);
             LLVMNativePointer dropInPlace = readDropInPlace(memory, vtablePointer, langStartVtable);
@@ -138,8 +140,10 @@ public abstract class LLVMStart extends LLVMIntrinsic {
                 return memory.getFunctionPointer(LLVMNativePointer.create(address));
             }
 
-            static LangStartVtableType create(DataLayout datalayout, Type vtableType) {
-                return new LangStartVtableType(datalayout, (StructureType) vtableType);
+            static LangStartVtableType create(DataLayout datalayout) {
+                StructureType type = new StructureType(false, new Type[]{new PointerType(PrimitiveType.I64), PrimitiveType.I64, PrimitiveType.I64, new PointerType(PrimitiveType.I64),
+                                new PointerType(PrimitiveType.I64), new PointerType(PrimitiveType.I64)});
+                return new LangStartVtableType(datalayout, type);
             }
 
         }
